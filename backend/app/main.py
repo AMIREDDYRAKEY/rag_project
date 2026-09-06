@@ -22,17 +22,13 @@ app = FastAPI(
 )
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
-# Allow the Vite dev server and Vercel production frontend to reach the backend
+# Open to all origins — Starlette doesn't support wildcard subdomains like
+# "https://*.vercel.app", so we use "*" for the public API.
+# NOTE: allow_credentials must be False when allow_origins=["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:3000",
-        "https://rag-project-flame.vercel.app",
-        "https://*.vercel.app",          # covers preview deployments
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
