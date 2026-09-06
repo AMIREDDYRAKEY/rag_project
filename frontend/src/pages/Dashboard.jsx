@@ -63,7 +63,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
           <p className="text-sm text-gray-400 mt-0.5">
@@ -72,28 +72,28 @@ export default function Dashboard() {
         </div>
         <div className="flex gap-3">
           <Link to="/chat"
-            className="px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md shadow-teal-200 hover:shadow-lg hover:shadow-teal-200 transition-all">
+            className="flex-1 sm:flex-none text-center px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md shadow-teal-200 hover:shadow-lg hover:shadow-teal-200 transition-all">
             New Chat
           </Link>
           <Link to="/documents"
-            className="px-4 py-2 text-sm font-medium rounded-xl bg-white/70 border border-white/80 text-gray-600 hover:bg-white transition-all">
-            View Documents
+            className="flex-1 sm:flex-none text-center px-4 py-2 text-sm font-medium rounded-xl bg-white/70 border border-white/80 text-gray-600 hover:bg-white transition-all">
+            View Docs
           </Link>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((s) => (
           <StatCard key={s.label} {...s} />
         ))}
       </div>
 
       {/* Bottom Grid */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Recent Activity - wide */}
-        <div className="col-span-2 glass-card rounded-2xl p-6">
+        <div className="lg:col-span-2 glass-card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-semibold text-gray-800">Recent Activity</h3>
             <span className="text-xs text-teal-500 font-medium cursor-pointer hover:underline">View all</span>

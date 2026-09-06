@@ -29,14 +29,14 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Chat</h1>
           <p className="text-sm text-gray-400 mt-0.5">Ask questions about your documents</p>
         </div>
         <button
           onClick={() => dispatch(clearChat())}
-          className="text-sm px-4 py-2 rounded-xl bg-white/70 border border-white/80 text-gray-500 hover:bg-white transition-all"
+          className="self-end sm:self-auto text-sm px-4 py-2 rounded-xl bg-white/70 border border-white/80 text-gray-500 hover:bg-white transition-all"
         >
           Clear Chat
         </button>
@@ -64,7 +64,7 @@ export default function Chat() {
                 R
               </div>
             )}
-            <div className={`max-w-lg px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+            <div className={`max-w-[85%] sm:max-w-lg px-4 py-3 rounded-2xl text-sm leading-relaxed ${
               msg.role === 'user'
                 ? 'text-white rounded-br-sm shadow-md shadow-teal-100'
                 : 'bg-white/80 text-gray-700 rounded-bl-sm border border-white shadow-sm'
