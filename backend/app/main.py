@@ -22,13 +22,15 @@ app = FastAPI(
 )
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
-# Allow the Vite dev server (port 5173) to reach the backend
+# Allow the Vite dev server and Vercel production frontend to reach the backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:3000",
+        "https://rag-project-flame.vercel.app",
+        "https://*.vercel.app",          # covers preview deployments
     ],
     allow_credentials=True,
     allow_methods=["*"],
