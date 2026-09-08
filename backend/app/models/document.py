@@ -17,13 +17,19 @@ class Document(Base):
 
     organization_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("organizations.id", ondelete="CASCADE"),
+        ForeignKey(
+            "organizations.id",
+            ondelete="CASCADE"
+        ),
         nullable=False
     )
 
     owner_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE"
+        ),
         nullable=False
     )
 
@@ -70,7 +76,7 @@ class Document(Base):
     )
 
     chunks = relationship(
-    "Chunk",
-    back_populates="document",
-    cascade="all, delete-orphan"
-)
+        "Chunk",
+        back_populates="document",
+        cascade="all, delete-orphan"
+    )
