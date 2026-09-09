@@ -1,3 +1,4 @@
+
 from uuid import UUID
 
 from sqlalchemy import BigInteger, ForeignKey, String, Text
@@ -10,73 +11,92 @@ from app.db.database import Base
 class Document(Base):
     __tablename__ = "documents"
 
+    # =========================
+    # Primary Key
+    # =========================
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        primary_key=True
+        primary_key=True,
     )
 
+    # =========================
+    # Organization
+    # =========================
     organization_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey(
             "organizations.id",
-            ondelete="CASCADE"
+            ondelete="CASCADE",
         ),
-        nullable=False
+        nullable=False,
     )
 
+    # =========================
+    # Document Owner
+    # =========================
     owner_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey(
             "users.id",
-            ondelete="CASCADE"
+            ondelete="CASCADE",
         ),
-        nullable=False
+        nullable=False,
     )
 
+    # =========================
+    # File Information
+    # =========================
     filename: Mapped[str] = mapped_column(
         String(255),
-        nullable=False
+        nullable=False,
     )
 
     content_type: Mapped[str | None] = mapped_column(
         String(100),
-        nullable=True
+        nullable=True,
     )
 
     file_size: Mapped[int | None] = mapped_column(
         BigInteger,
-        nullable=True
+        nullable=True,
     )
 
     storage_path: Mapped[str | None] = mapped_column(
         Text,
-        nullable=True
+        nullable=True,
     )
 
+    # =========================
+    # Processing Status
+    # =========================
     status: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
-        default="uploaded"
+        default="uploaded",
     )
+
+    # =========================
+    # Relationships
+    # =========================
 
     organization = relationship(
         "Organization",
-        back_populates="documents"
+        back_populates="documents",
     )
 
     owner = relationship(
         "User",
-        back_populates="documents"
+        back_populates="documents",
     )
 
     permissions = relationship(
         "DocumentPermission",
         back_populates="document",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     chunks = relationship(
         "Chunk",
         back_populates="document",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
