@@ -1,3 +1,4 @@
+
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
@@ -21,7 +22,78 @@ from app.models.chunk import Chunk
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    print("========================================")
+    print("DATABASE CONNECTION CHECK")
+    print("========================================")
+
+    try:
+        with engine.connect() as conn:
+
+            # Check database information
+            db_info = conn.execute(
+                text("""
+                    SELECT
+                        current_database(),
+                        current_user,
+                        current_schema()
+                """)
+            ).fetchone()
+
+            print("DATABASE:", db_info[0])
+            print("USER:", db_info[1])
+            print("SCHEMA:", db_info[2])
+
+            # Check PostgreSQL version
+            version = conn.execute(
+                text("SELECT version()")
+            ).scalar()
+
+            print("POSTGRES VERSION:", version)
+
+            # Check pgvector extension
+            vector_info = conn.execute(
+                text("""
+                    SELECT extname, extversion
+                    FROM pg_extension
+                    WHERE extname = 'vector'
+                """)
+            ).fetchone()
+
+            print("VECTOR EXTENSION:", vector_info)
+
+            if vector_info:
+                print("SUCCESS: pgvector is available")
+            else:
+                print("ERROR: pgvector is NOT available")
+
+            # Check vector type
+            vector_type = conn.execute(
+                text("""
+                    SELECT typname
+                    FROM pg_type
+                    WHERE typname = 'vector'
+                """)
+            ).fetchone()
+
+            print("VECTOR TYPE:", vector_type)
+
+            if vector_type:
+                print("SUCCESS: vector type exists")
+            else:
+                print("ERROR: vector type does NOT exist")
+
+    except Exception as e:
+        print("DATABASE CHECK FAILED:")
+        print(type(e).__name__)
+        print(str(e))
+
+    print("========================================")
+
+    # IMPORTANT:
+    # Temporarily disabled while debugging pgvector.
+    #
+    # Base.metadata.create_all(bind=engine)
+
     yield
 
 
@@ -71,4 +143,52 @@ def database_health(
     return {
         "database": "connected",
         "result": result.scalar()
+    }
+
+
+@app.get("/debug/database")
+def debug_database(
+    db: Session = Depends(get_db)
+):
+    # Database information
+    db_info = db.execute(
+        text("""
+            SELECT
+                current_database(),
+                current_user,
+                current_schema()
+        """)
+    ).fetchone()
+
+    # pgvector extension
+    vector_info = db.execute(
+        text("""
+            SELECT extname, extversion
+            FROM pg_extension
+            WHERE extname = 'vector'
+        """)
+    ).fetchone()
+
+    # vector type
+    vector_type = db.execute(
+        text("""
+            SELECT typname
+            FROM pg_type
+            WHERE typname = 'vector'
+        """)
+    ).fetchone()
+
+    return {
+        "database": db_info[0],
+        "user": db_info[1],
+        "schema": db_info[2],
+        "vector_extension": (
+            {
+                "name": vector_info[0],
+                "version": vector_info[1]
+            }
+            if vector_info
+            else None
+        ),
+        "vector_type_exists": bool(vector_type)
     }
