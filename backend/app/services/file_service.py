@@ -32,7 +32,7 @@ async def save_upload_file(
 
 def extract_pdf_text(
     file_path: str
-):
+) -> str:
     reader = PdfReader(file_path)
 
     pages = []
@@ -45,3 +45,21 @@ def extract_pdf_text(
             pages.append(text)
 
     return "\n".join(pages)
+
+
+def extract_text_from_file(
+    file_path: str,
+    content_type: str = ""
+) -> str:
+    path = Path(file_path)
+    suffix = path.suffix.lower()
+
+    if suffix == ".pdf" or content_type == "application/pdf":
+        return extract_pdf_text(file_path)
+
+    # For text, markdown, or plain documents
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            return f.read()
+    except Exception as exc:
+        raise ValueError(f"Could not extract text from file {file_path}: {exc}")

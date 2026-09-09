@@ -56,8 +56,8 @@ export const uploadDocumentApi = async ({ file, organization_id, owner_id }) => 
   return response.json();
 };
 
-// ── Fetch Documents (stub) ────────────────────────────────────────────────────
-// Backend doesn't have a GET list endpoint yet — returns empty array gracefully
+// ── Fetch Documents ───────────────────────────────────────────────────────────
+// GET /documents/?organization_id=...
 
 export const fetchDocumentsApi = async ({ organization_id }) => {
   try {
@@ -68,4 +68,18 @@ export const fetchDocumentsApi = async ({ organization_id }) => {
   } catch {
     return [];
   }
+};
+
+// ── Delete Document ───────────────────────────────────────────────────────────
+// DELETE /documents/{document_id}
+
+export const deleteDocumentApi = async ({ document_id }) => {
+  const response = await fetch(`${API_URL}/documents/${document_id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail ?? 'Failed to delete document');
+  }
+  return response.json();
 };

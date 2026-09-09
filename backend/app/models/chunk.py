@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import ForeignKey, Text
+from sqlalchemy import ForeignKey, Integer, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,13 +23,19 @@ class Chunk(Base):
         nullable=False
     )
 
+    chunk_index: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        default=0
+    )
+
     content: Mapped[str] = mapped_column(
         Text,
         nullable=False
     )
 
     embedding = mapped_column(
-        Vector(1536),
+        Vector(2048),
         nullable=True
     )
 

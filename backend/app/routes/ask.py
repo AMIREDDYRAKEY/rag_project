@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.schemas.ask import AskRequest, AskResponse
 from app.services.rag import ask_question
-from app.db.session import get_db
+from app.db.database import get_db
 
 
 router = APIRouter(

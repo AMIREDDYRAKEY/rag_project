@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDocumentsApi, uploadDocumentApi } from '../services/api';
+import { fetchDocumentsApi, uploadDocumentApi, deleteDocumentApi } from '../services/api';
 
 const initialState = {
   documents: [],   // { id, name, size, status, uploaded_at, organization_id }
@@ -28,10 +28,10 @@ export const uploadDocument = createAsyncThunk(
       const data = await uploadDocumentApi({ file, organization_id, owner_id });
       // Normalize the response into a document-like shape for the UI
       return {
-        id:           data.owner_id + '-' + Date.now(),  // temp id since backend doesn't return doc id yet
+        id:           data.id ?? (data.owner_id + '-' + Date.now()),
         name:         data.filename,
         size:         file.size,
-        status:       'uploaded',
+        status:       data.status ?? 'uploaded',
         uploaded_at:  new Date().toISOString(),
         organization_id: data.organization_id,
       };
@@ -44,8 +44,12 @@ export const uploadDocument = createAsyncThunk(
 export const deleteDocument = createAsyncThunk(
   'documents/delete',
   async ({ document_id }, { rejectWithValue }) => {
-    // Backend DELETE endpoint not implemented yet — remove from local state only
-    return document_id;
+    try {
+      await deleteDocumentApi({ document_id });
+      return document_id;
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
   }
 );
 

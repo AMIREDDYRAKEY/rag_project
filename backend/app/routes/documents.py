@@ -5,10 +5,10 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Header, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from app.db.database import get_db
+from app.db.database import SessionLocal, get_db
 from app.models.document import Document
 from app.models.chunk import Chunk
-from app.services.file_service import extract_pdf_text, save_upload_file
+from app.services.file_service import extract_text_from_file, save_upload_file
 from app.services.chunk_service import create_chunks
 from app.services.embeddings import generate_embedding
 
@@ -44,10 +44,11 @@ def list_documents(
 
 
 # ── Background processing ─────────────────────────────────────────────────────
-def _process_document(doc_id: UUID, file_path: str, db: Session):
-    """Chunk the file and embed each chunk — runs in background."""
+def _process_document(doc_id: UUID, file_path: str, content_type: str = ""):
+    """Chunk the file and embed each chunk — runs in background using an isolated DB session."""
+    db = SessionLocal()
     try:
-        text = extract_pdf_text(file_path)
+        text = extract_text_from_file(file_path, content_type)
         chunks = create_chunks(text)
 
         for idx, chunk_text in enumerate(chunks):
@@ -58,7 +59,6 @@ def _process_document(doc_id: UUID, file_path: str, db: Session):
                 chunk_index=idx,
                 content=chunk_text,
                 embedding=embedding,
-                created_at=datetime.now(timezone.utc),
             )
             db.add(chunk)
 
@@ -73,6 +73,8 @@ def _process_document(doc_id: UUID, file_path: str, db: Session):
             doc.status = "error"
             db.commit()
         raise exc
+    finally:
+        db.close()
 
 
 # ── Upload document ───────────────────────────────────────────────────────────
@@ -115,9 +117,8 @@ async def upload_document(
     db.commit()
     db.refresh(doc)
 
-    # Kick off chunking + embedding in background (pdf only for now)
-    if file.content_type == "application/pdf":
-        background_tasks.add_task(_process_document, doc.id, file_path, db)
+    # Kick off chunking + embedding in background
+    background_tasks.add_task(_process_document, doc.id, file_path, file.content_type or "")
 
     return {
         "message":         "Document uploaded successfully",

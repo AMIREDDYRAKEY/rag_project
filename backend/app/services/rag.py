@@ -52,12 +52,14 @@ def ask_question(
         JOIN documents d
             ON c.document_id = d.id
 
-        JOIN document_permissions dp
-            ON dp.document_id = d.id
+        LEFT JOIN document_permissions dp
+            ON dp.document_id = d.id AND dp.user_id = :user_id
 
         WHERE d.organization_id = :organization_id
-          AND dp.user_id = :user_id
-          AND dp.can_read = TRUE
+          AND (
+                d.owner_id = :user_id
+                OR (dp.user_id = :user_id AND dp.can_read = TRUE)
+          )
           AND c.embedding IS NOT NULL
 
         ORDER BY c.embedding <=> CAST(:embedding AS vector)
