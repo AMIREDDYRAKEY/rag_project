@@ -23,14 +23,75 @@ from app.models.chunk import Chunk
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    print("=" * 50)
+    print("=" * 60)
     print("DATABASE INITIALIZATION")
-    print("=" * 50)
+    print("=" * 60)
 
-    # Create all tables
-    Base.metadata.create_all(bind=engine)
+    try:
+        with engine.begin() as conn:
 
-    print("Database tables initialized")
+            # Check which database FastAPI is connected to
+            database = conn.execute(
+                text("SELECT current_database()")
+            ).scalar()
+
+            user = conn.execute(
+                text("SELECT current_user")
+            ).scalar()
+
+            schema = conn.execute(
+                text("SELECT current_schema()")
+            ).scalar()
+
+            search_path = conn.execute(
+                text("SHOW search_path")
+            ).scalar()
+
+            print("DATABASE:", database)
+            print("USER:", user)
+            print("SCHEMA:", schema)
+            print("SEARCH PATH:", search_path)
+
+            # Check pgvector extension
+            vector_extension = conn.execute(
+                text("""
+                    SELECT
+                        extname,
+                        extversion,
+                        extnamespace::regnamespace AS extension_schema
+                    FROM pg_extension
+                    WHERE extname = 'vector'
+                """)
+            ).fetchall()
+
+            print("VECTOR EXTENSION:", vector_extension)
+
+            # Check vector data type
+            vector_type = conn.execute(
+                text("""
+                    SELECT
+                        n.nspname AS schema_name,
+                        t.typname AS type_name
+                    FROM pg_type t
+                    JOIN pg_namespace n
+                        ON n.oid = t.typnamespace
+                    WHERE t.typname = 'vector'
+                """)
+            ).fetchall()
+
+            print("VECTOR TYPE:", vector_type)
+
+            # Create all tables
+            Base.metadata.create_all(bind=conn)
+
+        print("Database tables initialized successfully")
+
+    except Exception as e:
+        print("=" * 60)
+        print("DATABASE INITIALIZATION FAILED")
+        print("=" * 60)
+        print(type(e).__name__, ":", str(e))
+        raise
 
     yield
 
