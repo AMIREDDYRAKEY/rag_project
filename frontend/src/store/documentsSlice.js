@@ -22,24 +22,24 @@ export const fetchDocuments = createAsyncThunk(
 );
 
 export const uploadDocument = createAsyncThunk(
-  'documents/upload',
+  'documents/uploadDocument',
   async ({ file, organization_id, owner_id }, { rejectWithValue }) => {
     try {
-      const data = await uploadDocumentApi({ file, organization_id, owner_id });
-      // Normalize the response into a document-like shape for the UI
-      return {
-        id:           data.id ?? (data.owner_id + '-' + Date.now()),
-        name:         data.filename,
-        size:         file.size,
-        status:       data.status ?? 'uploaded',
-        uploaded_at:  new Date().toISOString(),
-        organization_id: data.organization_id,
-      };
-    } catch (err) {
-      return rejectWithValue(err.message);
+      console.log("SLICE ORGANIZATION:", organization_id)
+      console.log("SLICE OWNER:", owner_id)
+
+      const data = await uploadDocumentApi({
+        file,
+        organization_id,
+        owner_id,
+      })
+
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
     }
   }
-);
+)
 
 export const deleteDocument = createAsyncThunk(
   'documents/delete',
