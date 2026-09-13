@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Header, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal, get_db
@@ -82,8 +82,8 @@ def _process_document(doc_id: UUID, file_path: str, content_type: str = ""):
 async def upload_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    organization_id: UUID = Header(..., alias="organization-id"),
-    owner_id: UUID = Header(..., alias="owner-id"),
+    organization_id: UUID = Form(..., alias="organization_id"),
+    owner_id: UUID = Form(..., alias="owner_id"),
     db: Session = Depends(get_db),
 ):
     # Validate file type

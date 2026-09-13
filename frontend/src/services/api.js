@@ -182,19 +182,15 @@ export const uploadDocumentApi = async ({
   }
 
   const formData = new FormData();
-
   formData.append("file", file);
+  formData.append("organization_id", String(organization_id));
+  formData.append("owner_id", String(owner_id));
 
   const response = await fetch(
     `${BASE_URL}/documents/upload`,
     {
       method: "POST",
-
-      headers: {
-        "organization-id": String(organization_id),
-        "owner-id": String(owner_id),
-      },
-
+      // No manual Content-Type header — browser sets multipart/form-data + boundary automatically
       body: formData,
     }
   );
