@@ -163,83 +163,29 @@ export const uploadDocumentApi = async ({
   organization_id,
   owner_id,
 }) => {
-
-  // --------------------------------------------------------------------------
-  // Validate file
-  // --------------------------------------------------------------------------
+  console.log("========== UPLOAD DEBUG ==========");
+  console.log("File:", file);
+  console.log("Organization ID:", organization_id);
+  console.log("Owner ID:", owner_id);
+  console.log("==================================");
 
   if (!file) {
-    throw new Error("Please select a document");
+    throw new Error("No file selected");
   }
-
-
-  // --------------------------------------------------------------------------
-  // Validate organization ID
-  // --------------------------------------------------------------------------
 
   if (!organization_id) {
-    throw new Error(
-      "Organization ID is missing"
-    );
+    throw new Error("Organization ID is missing");
   }
-
-
-  // --------------------------------------------------------------------------
-  // Validate owner ID
-  // --------------------------------------------------------------------------
 
   if (!owner_id) {
-    throw new Error(
-      "Owner ID is missing"
-    );
+    throw new Error("Owner ID is missing");
   }
 
-
-  // --------------------------------------------------------------------------
-  // Debug
-  // --------------------------------------------------------------------------
-
-  console.log("========== DOCUMENT UPLOAD ==========");
-
-  console.log("File:", {
-    name: file.name,
-    type: file.type,
-    size: file.size,
-  });
-
-  console.log(
-    "Organization ID:",
-    organization_id
-  );
-
-  console.log(
-    "Owner ID:",
-    owner_id
-  );
-
-
-  // --------------------------------------------------------------------------
-  // Create FormData
-  // --------------------------------------------------------------------------
-
   const formData = new FormData();
-
   formData.append("file", file);
 
-
-  // --------------------------------------------------------------------------
-  // Send request
-  //
-  // IMPORTANT:
-  // Do NOT manually set Content-Type.
-  //
-  // Browser automatically creates:
-  //
-  // multipart/form-data; boundary=....
-  // --------------------------------------------------------------------------
-
   const response = await fetch(
-    `${BASE_URL}/documents/upload`,
+    `${API_URL}/documents/upload`,
     {
       method: "POST",
 
@@ -252,15 +198,27 @@ export const uploadDocumentApi = async ({
     }
   );
 
+  const data = await response.json().catch(() => ({}));
 
-  // --------------------------------------------------------------------------
-  // Handle response
-  // --------------------------------------------------------------------------
+  console.log("Upload status:", response.status);
+  console.log("Upload response:", data);
 
-  return handleResponse(
-    response,
-    "Document upload failed"
-  );
+  if (!response.ok) {
+    if (response.status === 422 && Array.isArray(data.detail)) {
+      const message = data.detail
+        .map((error) => {
+          const location = error.loc?.join(" → ");
+          return `${location}: ${error.msg}`;
+        })
+        .join("\n");
+
+      throw new Error(message);
+    }
+
+    throw new Error(data.detail || "Upload failed");
+  }
+
+  return data;
 };
 
 
