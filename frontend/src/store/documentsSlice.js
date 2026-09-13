@@ -25,8 +25,10 @@ export const uploadDocument = createAsyncThunk(
   'documents/uploadDocument',
   async ({ file, organization_id, owner_id }, { rejectWithValue }) => {
     try {
-      console.log("SLICE ORGANIZATION:", organization_id)
-      console.log("SLICE OWNER:", owner_id)
+      console.log("UPLOAD SLICE")
+      console.log("file:", file?.name)
+      console.log("organization_id:", organization_id)
+      console.log("owner_id:", owner_id)
 
       const data = await uploadDocumentApi({
         file,
