@@ -2,8 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 
 // ── Mock user seeded from .env (no login required) ────────────────────────────
 const MOCK_USER = {
-  id:              import.meta.env.VITE_MOCK_USER_ID  ?? '',
-  organization_id: import.meta.env.VITE_MOCK_ORG_ID   ?? '',
+  id:              import.meta.env.VITE_MOCK_USER_ID  ?? '2deb812b-1dc3-4709-9ce4-2e2c6be23c34',
+  organization_id: import.meta.env.VITE_MOCK_ORG_ID   ?? 'b8c438e1-284f-4dc3-a10d-fba960842aa6',
   name:            import.meta.env.VITE_MOCK_USER_NAME ?? 'Admin User',
   email:           import.meta.env.VITE_MOCK_USER_EMAIL ?? 'admin@example.com',
   role:            import.meta.env.VITE_MOCK_USER_ROLE  ?? 'admin',

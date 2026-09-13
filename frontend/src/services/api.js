@@ -186,7 +186,7 @@ export const uploadDocumentApi = async ({
   formData.append("file", file);
 
   const response = await fetch(
-    "https://rag-project-ewtu.onrender.com/documents/upload",
+    `${BASE_URL}/documents/upload`,
     {
       method: "POST",
 
