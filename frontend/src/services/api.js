@@ -1,14 +1,21 @@
- 
+
+
+
+// ============================================================================
+// BASE URL
+// ============================================================================
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://rag-project-ewtu.onrender.com";
+  import.meta.env.VITE_API_URL ||
+  "https://rag-project-ewtu.onrender.com";
 
-// Remove accidental trailing slash
 const BASE_URL = API_URL.replace(/\/+$/, "");
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: Handle API response
-// ─────────────────────────────────────────────────────────────────────────────
+
+// ============================================================================
+// COMMON RESPONSE HANDLER
+// ============================================================================
+
 const handleResponse = async (response, defaultMessage) => {
   let data = {};
 
@@ -19,199 +26,403 @@ const handleResponse = async (response, defaultMessage) => {
   }
 
   if (!response.ok) {
-    throw new Error(data.detail || data.message || defaultMessage);
+    console.error("API Error:", {
+      status: response.status,
+      statusText: response.statusText,
+      data,
+    });
+
+    // FastAPI 422 validation error
+    if (response.status === 422 && Array.isArray(data.detail)) {
+      const errors = data.detail
+        .map((error) => {
+          const location = error.loc
+            ? error.loc.join(" → ")
+            : "request";
+
+          return `${location}: ${error.msg}`;
+        })
+        .join("\n");
+
+      throw new Error(`Validation error:\n${errors}`);
+    }
+
+    throw new Error(
+      data.detail ||
+      data.message ||
+      defaultMessage
+    );
   }
 
   return data;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
+// ============================================================================
 // ASK QUESTION / RAG
 // POST /ask/
-//
-// Request:
-// {
-//   question,
-//   organization_id,
-//   user_id,
-//   top_k
-// }
-//
-// Response:
-// {
-//   question,
-//   answer,
-//   sources: [
-//     {
-//       chunk_id,
-//       document_id,
-//       document_name,
-//       chunk_index,
-//       distance
-//     }
-//   ]
-// }
-// ─────────────────────────────────────────────────────────────────────────────
+// ============================================================================
+
 export const askQuestion = async ({
   question,
   organization_id,
   user_id,
   top_k = 3,
 }) => {
+  if (!question || !question.trim()) {
+    throw new Error("Question is required");
+  }
+
+  if (!organization_id) {
+    throw new Error("Organization ID is required");
+  }
+
+  if (!user_id) {
+    throw new Error("User ID is required");
+  }
+
   const response = await fetch(`${BASE_URL}/ask/`, {
     method: "POST",
+
     headers: {
       "Content-Type": "application/json",
     },
+
     body: JSON.stringify({
-      question,
-      organization_id,
-      user_id,
-      top_k,
+      question: question.trim(),
+      organization_id: String(organization_id),
+      user_id: String(user_id),
+      top_k: Number(top_k),
     }),
   });
 
-  return handleResponse(response, "Failed to get answer");
+  return handleResponse(
+    response,
+    "Failed to get answer"
+  );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
+// ============================================================================
 // SEMANTIC SEARCH
 // GET /search/
-//
-// Query:
-// ?query=...
-// &organization_id=...
-// &user_id=...
-// &top_k=5
-// ─────────────────────────────────────────────────────────────────────────────
+// ============================================================================
+
 export const searchDocuments = async ({
   query,
   organization_id,
   user_id,
   top_k = 5,
 }) => {
+  if (!query || !query.trim()) {
+    throw new Error("Search query is required");
+  }
+
+  if (!organization_id) {
+    throw new Error("Organization ID is required");
+  }
+
+  if (!user_id) {
+    throw new Error("User ID is required");
+  }
+
   const params = new URLSearchParams({
-    query: String(query),
+    query: query.trim(),
     organization_id: String(organization_id),
     user_id: String(user_id),
     top_k: String(top_k),
   });
 
-  const response = await fetch(`${BASE_URL}/search/?${params.toString()}`);
+  const response = await fetch(
+    `${BASE_URL}/search/?${params.toString()}`
+  );
 
-  return handleResponse(response, "Search failed");
+  return handleResponse(
+    response,
+    "Search failed"
+  );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
+// ============================================================================
 // UPLOAD DOCUMENT
 // POST /documents/upload
 //
-// Headers:
-// organization-id
-// owner-id
+// FastAPI expects:
 //
-// Body:
-// multipart/form-data
+// Header:
+// organization-id: UUID
+// owner-id: UUID
+//
+// Form Data:
 // file
-// ─────────────────────────────────────────────────────────────────────────────
+// ============================================================================
+
 export const uploadDocumentApi = async ({
   file,
   organization_id,
   owner_id,
 }) => {
+
+  // --------------------------------------------------------------------------
+  // Validate file
+  // --------------------------------------------------------------------------
+
   if (!file) {
     throw new Error("Please select a document");
   }
 
-  const formData = new FormData();
-  formData.append("file", file);
 
-  const response = await fetch(`${BASE_URL}/documents/upload`, {
-    method: "POST",
-    headers: {
-      "organization-id": String(organization_id),
-      "owner-id": String(owner_id),
-    },
-    body: formData,
+  // --------------------------------------------------------------------------
+  // Validate organization ID
+  // --------------------------------------------------------------------------
+
+  if (!organization_id) {
+    throw new Error(
+      "Organization ID is missing"
+    );
+  }
+
+
+  // --------------------------------------------------------------------------
+  // Validate owner ID
+  // --------------------------------------------------------------------------
+
+  if (!owner_id) {
+    throw new Error(
+      "Owner ID is missing"
+    );
+  }
+
+
+  // --------------------------------------------------------------------------
+  // Debug
+  // --------------------------------------------------------------------------
+
+  console.log("========== DOCUMENT UPLOAD ==========");
+
+  console.log("File:", {
+    name: file.name,
+    type: file.type,
+    size: file.size,
   });
 
-  return handleResponse(response, "Upload failed");
+  console.log(
+    "Organization ID:",
+    organization_id
+  );
+
+  console.log(
+    "Owner ID:",
+    owner_id
+  );
+
+
+  // --------------------------------------------------------------------------
+  // Create FormData
+  // --------------------------------------------------------------------------
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+
+  // --------------------------------------------------------------------------
+  // Send request
+  //
+  // IMPORTANT:
+  // Do NOT manually set Content-Type.
+  //
+  // Browser automatically creates:
+  //
+  // multipart/form-data; boundary=....
+  // --------------------------------------------------------------------------
+
+  const response = await fetch(
+    `${BASE_URL}/documents/upload`,
+    {
+      method: "POST",
+
+      headers: {
+        "organization-id": String(organization_id),
+        "owner-id": String(owner_id),
+      },
+
+      body: formData,
+    }
+  );
+
+
+  // --------------------------------------------------------------------------
+  // Handle response
+  // --------------------------------------------------------------------------
+
+  return handleResponse(
+    response,
+    "Document upload failed"
+  );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
+// ============================================================================
 // FETCH DOCUMENTS
 // GET /documents/?organization_id=...
-// ─────────────────────────────────────────────────────────────────────────────
-export const fetchDocumentsApi = async ({ organization_id }) => {
+// ============================================================================
+
+export const fetchDocumentsApi = async ({
+  organization_id,
+}) => {
+
+  if (!organization_id) {
+    console.error(
+      "fetchDocumentsApi: Organization ID missing"
+    );
+
+    return [];
+  }
+
   try {
+
     const params = new URLSearchParams({
       organization_id: String(organization_id),
     });
+
 
     const response = await fetch(
       `${BASE_URL}/documents/?${params.toString()}`
     );
 
+
     if (!response.ok) {
+
+      console.error(
+        "Failed to fetch documents:",
+        response.status
+      );
+
       return [];
     }
 
+
     const data = await response.json();
 
-    // Supports both:
-// 1. [document1, document2]
-// 2. { documents: [...] }
+
+    // Backend currently returns:
+    //
+    // [
+    //   {
+    //     id,
+    //     name,
+    //     size,
+    //     status,
+    //     uploaded_at,
+    //     content_type
+    //   }
+    // ]
+
     if (Array.isArray(data)) {
       return data;
     }
+
+
+    // Also support:
+    //
+    // {
+    //   documents: [...]
+    // }
 
     if (Array.isArray(data.documents)) {
       return data.documents;
     }
 
-    return data;
+
+    return [];
+
   } catch (error) {
-    console.error("Fetch documents error:", error);
+
+    console.error(
+      "Fetch documents error:",
+      error
+    );
+
     return [];
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
+// ============================================================================
 // DELETE DOCUMENT
 // DELETE /documents/{document_id}
-// ─────────────────────────────────────────────────────────────────────────────
-export const deleteDocumentApi = async ({ document_id }) => {
+// ============================================================================
+
+export const deleteDocumentApi = async ({
+  document_id,
+}) => {
+
   if (!document_id) {
-    throw new Error("Document ID is required");
+    throw new Error(
+      "Document ID is required"
+    );
   }
 
+
   const response = await fetch(
-    `${BASE_URL}/documents/${encodeURIComponent(document_id)}`,
+    `${BASE_URL}/documents/${encodeURIComponent(
+      document_id
+    )}`,
     {
       method: "DELETE",
     }
   );
 
-  return handleResponse(response, "Failed to delete document");
+
+  return handleResponse(
+    response,
+    "Failed to delete document"
+  );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HEALTH CHECK
+
+// ============================================================================
+// BACKEND HEALTH
 // GET /health
-// ─────────────────────────────────────────────────────────────────────────────
+// ============================================================================
+
 export const checkHealthApi = async () => {
-  const response = await fetch(`${BASE_URL}/health`);
 
-  return handleResponse(response, "Backend is not available");
+  const response = await fetch(
+    `${BASE_URL}/health`
+  );
+
+
+  return handleResponse(
+    response,
+    "Backend is not available"
+  );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATABASE HEALTH CHECK
+
+// ============================================================================
+// DATABASE HEALTH
 // GET /health/database
-// ─────────────────────────────────────────────────────────────────────────────
-export const checkDatabaseHealthApi = async () => {
-  const response = await fetch(`${BASE_URL}/health/database`);
+// ============================================================================
 
-  return handleResponse(response, "Database connection failed");
+export const checkDatabaseHealthApi = async () => {
+
+  const response = await fetch(
+    `${BASE_URL}/health/database`
+  );
+
+
+  return handleResponse(
+    response,
+    "Database connection failed"
+  );
 };
- 
+
+
+// ============================================================================
+// EXPORT BASE URL
+// ============================================================================
+
+export { BASE_URL };
