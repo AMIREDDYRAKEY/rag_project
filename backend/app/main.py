@@ -108,10 +108,19 @@ app.add_middleware(
     allow_origins=[
         "https://rag-project-flame.vercel.app",
         "http://localhost:5173",
+        "*",
     ],
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+        "organization-id",
+        "owner-id",
+    ],
 )
 
 
