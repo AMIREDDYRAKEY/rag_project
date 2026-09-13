@@ -15,22 +15,24 @@ export default function Documents() {
     }
   }, [dispatch, user])
 
- const handleUpload = (e) => {
+const handleUpload = (e) => {
   const file = e.target.files[0]
   if (!file) return
 
-  console.log("========== DOCUMENT UPLOAD ==========")
-  console.log("File name:", file.name)
-  console.log("File type:", file.type)
-  console.log("Organization ID:", user?.organization_id)
-  console.log("Owner ID:", user?.id)
-  console.log("Full user:", user)
-  console.log("=====================================")
+  if (!user?.organization_id) {
+    console.error("Organization ID missing:", user)
+    return
+  }
+
+  if (!user?.id) {
+    console.error("Owner ID missing:", user)
+    return
+  }
 
   dispatch(uploadDocument({
     file,
-    organization_id: user?.organization_id,
-    owner_id: user?.id,
+    organization_id: user.organization_id,
+    owner_id: user.id,
   }))
 
   e.target.value = ''
