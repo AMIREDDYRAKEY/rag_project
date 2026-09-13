@@ -164,7 +164,7 @@ export const uploadDocumentApi = async ({
   owner_id,
 }) => {
   console.log("========== UPLOAD DEBUG ==========");
-  console.log("File:", file);
+  console.log("File:", file?.name);
   console.log("Organization ID:", organization_id);
   console.log("Owner ID:", owner_id);
   console.log("==================================");
@@ -182,10 +182,11 @@ export const uploadDocumentApi = async ({
   }
 
   const formData = new FormData();
+
   formData.append("file", file);
 
   const response = await fetch(
-    `${API_URL}/documents/upload`,
+    "https://rag-project-ewtu.onrender.com/documents/upload",
     {
       method: "POST",
 
