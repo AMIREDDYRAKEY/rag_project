@@ -19,21 +19,33 @@ const handleUpload = (e) => {
   const file = e.target.files[0]
   if (!file) return
 
-  if (!user?.organization_id) {
-    console.error("Organization ID missing:", user)
+  const organizationId = user?.organization_id
+  const ownerId = user?.id
+
+  console.log("========== UPLOAD DEBUG ==========")
+  console.log("File name:", file.name)
+  console.log("Organization ID:", organizationId)
+  console.log("Owner ID:", ownerId)
+  console.log("User object:", user)
+  console.log("==================================")
+
+  if (!organizationId) {
+    console.error("❌ Organization ID is missing")
     return
   }
 
-  if (!user?.id) {
-    console.error("Owner ID missing:", user)
+  if (!ownerId) {
+    console.error("❌ Owner ID is missing")
     return
   }
 
-  dispatch(uploadDocument({
-    file,
-    organization_id: user.organization_id,
-    owner_id: user.id,
-  }))
+  dispatch(
+    uploadDocument({
+      file,
+      organization_id: organizationId,
+      owner_id: ownerId,
+    })
+  )
 
   e.target.value = ''
 }
